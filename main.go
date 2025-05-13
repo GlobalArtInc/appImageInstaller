@@ -419,12 +419,13 @@ func runInstallScript(appPath string) error {
 }
 
 func help() {
-	fmt.Println("usage: sudo appinstaller path/to/app.AppImage")
+	fmt.Println("Usage: sudo appinstaller [OPTIONS] [path/to/app.AppImage]")
 	fmt.Println("(after install use sudo update-desktop-database to reload gnome icons)")
-	fmt.Println("other options: ")
-	fmt.Println("-l          to list installed apps (from this tool only)")
-	fmt.Println(" ")
-	fmt.Println("-d appName  to delete the app (installed by this tool)")
+	fmt.Println("\nOptions:")
+	fmt.Println("  -l, --list            List installed apps (from this tool only)")
+	fmt.Println("  -d, --delete <name>   Delete the specified app (installed by this tool)")
+	fmt.Println("  -h, --help            Show this help message")
+	fmt.Println("  -v, --version         Show version information")
 }
 
 func checkFzf() bool {
@@ -541,17 +542,29 @@ func chooseScript() error {
 		return nil
 	}
 
-	if os.Args[1] == "-l" {
+	switch os.Args[1] {
+	case "-l", "--list":
 		return listing()
+	case "-d", "--delete":
+		if len(os.Args) >= 3 {
+			return deleteApp(os.Args[2])
+		}
+		fmt.Println("Error: Application name required for delete operation")
+		help()
+		return fmt.Errorf("missing application name")
+	case "-h", "--help":
+		help()
+		return nil
+	case "-v", "--version":
+		fmt.Println("1.0")
+		return nil
+	default:
+		if len(os.Args) == 2 {
+			return runInstallScript(os.Args[1])
+		}
+		help()
+		return nil
 	}
-	if os.Args[1] == "-d" && len(os.Args) >= 3 {
-		return deleteApp(os.Args[2])
-	}
-	if len(os.Args) == 2 {
-		return runInstallScript(os.Args[1])
-	}
-	help()
-	return nil
 }
 
 func checkSuperuser() bool {
@@ -594,16 +607,18 @@ func main() {
 		os.Exit(0)
 	}
 
-	if os.Args[1] == "-h" {
+	switch os.Args[1] {
+	case "-h", "--help":
 		help()
 		os.Exit(0)
-	}
-	if os.Args[1] == "-v" {
+	case "-v", "--version":
 		fmt.Println("1.0")
 		os.Exit(0)
 	}
+
 	err := chooseScript()
 	if err != nil {
 		fmt.Println(err)
+		os.Exit(1)
 	}
 }

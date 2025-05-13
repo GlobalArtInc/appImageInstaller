@@ -1,0 +1,21 @@
+app-id: com.globalart.appinstaller
+runtime: org.freedesktop.Platform
+runtime-version: '22.08'
+sdk: org.freedesktop.Sdk
+command: appinstaller
+finish-args:
+- --share=network
+- --share=ipc
+- --socket=x11
+- --socket=wayland
+- --filesystem=home
+- --filesystem=host
+modules:
+- name: appinstaller
+  buildsystem: simple
+  build-commands:
+  - install -D appinstaller "${FLATPAK_DEST}/bin/appinstaller"
+  sources:
+  - type: file
+    path: appinstaller
+    dest-filename: appinstaller

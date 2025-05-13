@@ -1,0 +1,49 @@
+name: Build Flatpak
+
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+
+jobs:
+  build:
+    name: Build Flatpak
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/andyholmes/flatter/freedesktop:24.08
+      options: --privileged
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "stable"
+
+      - name: Build and Package Flatpak
+        run: |
+          # Make script executable
+          chmod +x flatpak/build-flatpak.sh
+
+          # Run the build script
+          cd flatpak
+          ./build-flatpak.sh
+          cd ..
+
+      - name: Upload Flatpak Bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: flatpak-bundle
+          path: |
+            flatpak/*.flatpak
+
+      - name: Upload Flatpak Bundle to Release
+        if: github.event_name == 'release'
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: "flatpak/*.flatpak"
+          file_glob: true
+          tag: ${{ github.ref }}

@@ -21,32 +21,40 @@ A lightweight tool for seamless integration of AppImage applications into Linux 
 
 #### Debian/Ubuntu:
 ```bash
-# Download the latest .deb package from releases
-wget https://github.com/GlobalArtInc/appImageInstaller/releases/latest/download/appinstaller_linux_amd64.deb
-# Install the package
-sudo dpkg -i appinstaller_linux_amd64.deb
+curl -L https://github.com/GlobalArtInc/appImageInstaller/releases/latest/download/appinstaller_linux_amd64.deb -o /tmp/appinstaller.deb && sudo dpkg -i /tmp/appinstaller.deb && rm /tmp/appinstaller.deb
 ```
 
 #### RHEL/Fedora:
 ```bash
-# Download the latest .rpm package from releases
-wget https://github.com/GlobalArtInc/appImageInstaller/releases/latest/download/appinstaller_linux_amd64.rpm
-# Install the package
-sudo rpm -i appinstaller_linux_amd64.rpm
+curl -L https://github.com/GlobalArtInc/appImageInstaller/releases/latest/download/appinstaller_linux_amd64.rpm -o /tmp/appinstaller.rpm && sudo rpm -i /tmp/appinstaller.rpm && rm /tmp/appinstaller.rpm
 ```
+
+#### Snap:
+```bash
+# Install from Snap Store
+sudo snap install appinstaller
+
+# Or install from a local snap file
+sudo snap install appinstaller_amd64.snap --dangerous
+```
+
+#### Flatpak:
+```bash
+# Install from a local Flatpak bundle
+flatpak install --user appinstaller.flatpak
+
+# After adding a repository
+flatpak install --user com.globalart.appinstaller
+```
+
+See [flatpak/FLATPAK.md](flatpak/FLATPAK.md) for more information on building and installing the Flatpak package.
 
 ### Manual Installation
 
-Download the latest binary release and install it system-wide:
+Download and install the latest binary release:
 
 ```bash
-# Download the latest release
-wget https://github.com/GlobalArtInc/appImageInstaller/releases/latest/download/appinstaller_linux_amd64.tar.gz
-# Extract the archive
-tar xzf appinstaller_linux_amd64.tar.gz
-# Install the binary
-sudo cp appinstaller /usr/bin
-sudo chmod +x /usr/bin/appinstaller
+curl -L https://github.com/GlobalArtInc/appImageInstaller/releases/latest/download/appinstaller_linux_amd64.tar.gz -o /tmp/appinstaller.tar.gz && sudo tar xzf /tmp/appinstaller.tar.gz -C /usr/bin/ appinstaller && rm /tmp/appinstaller.tar.gz && sudo chmod +x /usr/bin/appinstaller
 ```
 
 ## Usage

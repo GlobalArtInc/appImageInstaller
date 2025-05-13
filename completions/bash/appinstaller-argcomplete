@@ -1,0 +1,40 @@
+#!/bin/bash
+
+_appinstaller_completion() {
+    local cur prev opts
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    
+    # Main program options
+    opts="-h --help -v --version -l --list -d --delete"
+
+    case "${prev}" in
+        -d|--delete)
+            # Autocomplete installed applications for deletion
+            local installed_apps=$(appinstaller -l 2>/dev/null | cut -d' ' -f1)
+            COMPREPLY=( $(compgen -W "${installed_apps}" -- ${cur}) )
+            return 0
+            ;;
+        -i|--install)
+            # Autocomplete .AppImage, .deb and .rpm files for installation
+            local package_files=$(find . -maxdepth 1 \( -name "*.AppImage" -o -name "*.deb" -o -name "*.rpm" \) -type f -printf "%f\n" 2>/dev/null)
+            COMPREPLY=( $(compgen -W "${package_files}" -- ${cur}) )
+            return 0
+            ;;
+        *)
+            if [[ ${cur} == -* ]] ; then
+                # Autocomplete options starting with dash
+                COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+            else
+                # Default autocomplete for package files
+                local package_files=$(find . -maxdepth 1 \( -name "*.AppImage" -o -name "*.deb" -o -name "*.rpm" \) -type f -printf "%f\n" 2>/dev/null)
+                COMPREPLY=( $(compgen -W "${package_files}" -- ${cur}) )
+            fi
+            return 0
+            ;;
+    esac
+}
+
+# Register completion function for appinstaller command
+complete -F _appinstaller_completion appinstaller 
