@@ -1,0 +1,62 @@
+project_name: appinstaller
+
+before:
+  hooks:
+  - go mod tidy
+
+builds:
+- env:
+  - CGO_ENABLED=0
+  goos:
+  - linux
+  goarch:
+  - amd64
+  - arm64
+  binary: appinstaller
+
+archives:
+- format: tar.gz
+  name_template: >-
+    {{ .ProjectName }}_{{ .Os }}_{{ .Arch }}
+  files:
+  - README.md
+  - LICENSE*
+
+nfpms:
+- package_name: appinstaller
+  file_name_template: >-
+    {{ .ProjectName }}_{{ .Os }}_{{ .Arch }}
+  homepage: https://github.com/GlobalArtInc/appImageInstaller
+  maintainer: GlobalArtInc
+  description: |-
+    AppImage installer for Linux
+    Helps manage AppImage applications on Linux systems
+  license: MIT
+  formats:
+  - deb
+  - rpm
+  dependencies:
+  - git
+  recommends:
+  - golang
+  contents:
+  - src: ./README.md
+    dst: /usr/share/doc/appinstaller/README.md
+  - src: ./LICENSE
+    dst: /usr/share/doc/appinstaller/LICENSE
+
+checksum:
+  name_template: 'checksums.txt'
+
+snapshot:
+  name_template: "{{ incpatch .Version }}-next"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+    - '^docs:'
+    - '^test:'
+    - '^ci:'
+    - Merge pull request
+    - Merge branch
