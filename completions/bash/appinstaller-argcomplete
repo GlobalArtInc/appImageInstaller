@@ -7,7 +7,7 @@ _appinstaller_completion() {
     prev="${COMP_WORDS[COMP_CWORD-1]}"
     
     # Main program options
-    opts="-h --help -v --version -l --list -d --delete"
+    opts="-h --help -v --version -l --list -d --delete -i --install"
 
     case "${prev}" in
         -d|--delete)
@@ -17,8 +17,8 @@ _appinstaller_completion() {
             return 0
             ;;
         -i|--install)
-            # Autocomplete .AppImage, .deb and .rpm files for installation
-            local package_files=$(find . -maxdepth 1 \( -name "*.AppImage" -o -name "*.deb" -o -name "*.rpm" \) -type f -printf "%f\n" 2>/dev/null)
+            # Autocomplete .AppImage, files for installation
+            local package_files=$(find . -maxdepth 1 \( -name "*.AppImage" \) -type f -printf "%f\n" 2>/dev/null)
             COMPREPLY=( $(compgen -W "${package_files}" -- ${cur}) )
             return 0
             ;;
@@ -26,10 +26,6 @@ _appinstaller_completion() {
             if [[ ${cur} == -* ]] ; then
                 # Autocomplete options starting with dash
                 COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
-            else
-                # Default autocomplete for package files
-                local package_files=$(find . -maxdepth 1 \( -name "*.AppImage" -o -name "*.deb" -o -name "*.rpm" \) -type f -printf "%f\n" 2>/dev/null)
-                COMPREPLY=( $(compgen -W "${package_files}" -- ${cur}) )
             fi
             return 0
             ;;

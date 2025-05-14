@@ -419,13 +419,13 @@ func runInstallScript(appPath string) error {
 }
 
 func help() {
-	fmt.Println("Usage: sudo appinstaller [OPTIONS] [path/to/app.AppImage]")
-	fmt.Println("(after install use sudo update-desktop-database to reload gnome icons)")
+	fmt.Println("Usage: sudo appinstaller [OPTIONS]")
 	fmt.Println("\nOptions:")
 	fmt.Println("  -l, --list            List installed apps (from this tool only)")
 	fmt.Println("  -d, --delete <name>   Delete the specified app (installed by this tool)")
 	fmt.Println("  -h, --help            Show this help message")
 	fmt.Println("  -v, --version         Show version information")
+	fmt.Println("  -i, --install <path>  Install the specified app")
 }
 
 func checkFzf() bool {
@@ -558,10 +558,13 @@ func chooseScript() error {
 	case "-v", "--version":
 		fmt.Println("1.0")
 		return nil
-	default:
-		if len(os.Args) == 2 {
-			return runInstallScript(os.Args[1])
+	case "-i", "--install":
+		if len(os.Args) == 3 {
+			return runInstallScript(os.Args[2])
 		}
+		fmt.Println("Error: Application path required for install operation")
+		return nil
+	default:
 		help()
 		return nil
 	}

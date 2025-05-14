@@ -61,7 +61,7 @@ curl -L https://github.com/GlobalArtInc/appImageInstaller/releases/latest/downlo
 
 Install an AppImage:
 ```bash
-sudo appinstaller /path/to/your/application.AppImage
+sudo appinstaller -i /path/to/your/application.AppImage
 ```
 
 List installed applications:
