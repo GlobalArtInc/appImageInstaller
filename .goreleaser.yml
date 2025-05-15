@@ -3,7 +3,6 @@ project_name: appinstaller
 before:
   hooks:
     - go mod tidy
-    - bash -c 'export PATH=/snap/bin:$PATH'
 
 builds:
   - env:
@@ -55,24 +54,24 @@ nfpms:
         file_info:
           mode: 0644
 
-# snapcrafts:
-# - name_template: "{{ .ProjectName }}_{{ .Arch }}"
-#   summary: AppImage installer for Linux
-#   description: |
-#     AppImage installer for Linux
-#     Helps manage AppImage applications on Linux systems
-#   grade: stable
-#   confinement: strict
-#   publish: true
-#   license: MIT
-#   base: core20
-#   apps:
-#     appinstaller:
-#       command: appinstaller
-#       plugs:
-#       - home
-#       - network
-#       - removable-media
+snapcrafts:
+  - name_template: "{{ .ProjectName }}_{{ .Arch }}"
+    summary: AppImage installer for Linux
+    description: |
+      AppImage installer for Linux
+      Helps manage AppImage applications on Linux systems
+    grade: stable
+    confinement: strict
+    publish: true
+    license: MIT
+    base: core20
+    apps:
+      appinstaller:
+        command: appinstaller
+        plugs:
+          - home
+          - network
+          - removable-media
 
 checksum:
   name_template: "checksums.txt"
