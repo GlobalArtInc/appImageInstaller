@@ -14,6 +14,7 @@ A lightweight tool for seamless integration of AppImage applications into Linux 
 - Icon extraction and integration
 - Clean and simple command-line interface
 - Proper file permissions handling
+- Autostart management support
 
 ## Installation
 
@@ -64,10 +65,28 @@ Install an AppImage:
 sudo appinstaller -i /path/to/your/application.AppImage
 ```
 
-List installed applications:
+Install an AppImage and add to autostart:
+```bash
+sudo appinstaller -i /path/to/your/application.AppImage -a
+```
+
+List and manage installed applications:
 ```bash
 sudo appinstaller -l
 ```
+This will show a list of installed applications with their autostart status:
+- [ ] means the application is not in autostart
+- [*] means the application is in autostart
+
+With fzf installed:
+- Use Enter to toggle autostart status
+- Use Delete to remove the application
+- Use Esc to exit
+
+Without fzf:
+- Enter the application number and choose action:
+  - 'd' to delete the application
+  - 't' to toggle autostart status
 
 Remove an installed application:
 ```bash
@@ -85,7 +104,9 @@ appinstaller -h
 2. Locates and processes the .desktop file
 3. Copies the application to a system directory
 4. Integrates icons and creates desktop entries
-5. Cleans up temporary files
+5. Creates autostart entry if requested
+6. Provides interactive management of autostart settings
+7. Cleans up temporary files
 
 ## Requirements
 

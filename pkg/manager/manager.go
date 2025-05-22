@@ -22,6 +22,10 @@ func New(config types.Config) *Manager {
     }
 }
 
+func (m *Manager) Config() types.Config {
+    return m.config
+}
+
 func (m *Manager) IsGeneratedDesktop(deskFile *desktop.DesktopFile) (bool, error) {
     isValid, err := m.IsValidDesktop(deskFile)
     if !isValid {

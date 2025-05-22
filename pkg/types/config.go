@@ -14,4 +14,5 @@ type Config struct {
     ExecPath        string 
 
     GnomeDesktopDir string
+    AutostartDir    string
 } 

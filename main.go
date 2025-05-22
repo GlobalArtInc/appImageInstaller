@@ -207,6 +207,7 @@ func setConfig(path string) types.Config {
 		ExtractDir:      "/tmp/appInstaller",
 		ExecDir:         "/usr/share/appImages/",
 		GnomeDesktopDir: "/usr/share/applications/",
+		AutostartDir:    "/etc/xdg/autostart/",
 		Debug:           false,
 		ImgPath:         "/usr/share/pixmaps/",
 		InputPath:       path,
@@ -372,7 +373,7 @@ func copyImage(deskFile *desktop.DesktopFile, config types.Config) error {
 	return fmt.Errorf("failed to find or copy icon: %v", err)
 }
 
-func install(config types.Config) {
+func install(config types.Config, autostart bool) {
 	err := preInstall(config)
 	if err != nil {
 		log.Fatal("setup failed: ", err)
@@ -393,6 +394,13 @@ func install(config types.Config) {
 	if err != nil {
 		log.Fatal("failed to write desktop file ", err)
 	}
+
+	if autostart {
+		err = deskFile.CreateAutostart(config.AutostartDir)
+		if err != nil {
+			log.Fatal("failed to create autostart entry: ", err)
+		}
+	}
 }
 
 func runInstallScript(appPath string) error {
@@ -410,7 +418,7 @@ func runInstallScript(appPath string) error {
 	if err != nil {
 		return fmt.Errorf("removing extract directory: %w", err)
 	}
-	install(config)
+	install(config, false)
 	err = os.RemoveAll(config.ExtractDir)
 	if err != nil {
 		return fmt.Errorf("removing extract directory: %w", err)
@@ -426,6 +434,7 @@ func help() {
 	fmt.Println("  -h, --help            Show this help message")
 	fmt.Println("  -v, --version         Show version information")
 	fmt.Println("  -i, --install <path>  Install the specified app")
+	fmt.Println("  -a, --autostart       Add to autostart (use with --install)")
 }
 
 func checkFzf() bool {
@@ -439,10 +448,14 @@ func listingWithFzf(m *manager.Manager, entries []*desktop.DesktopFile) error {
 		name, _ := entry.Category("Desktop Entry").Get("Name")
 		exec, _ := entry.Category("Desktop Entry").Get("Exec")
 		execPath := strings.Split(exec, " ")[0]
-		items = append(items, fmt.Sprintf("%-30s | %s", name, execPath))
+		isAutostart := "[ ]"
+		if _, err := os.Stat(filepath.Join(m.Config().AutostartDir, fmt.Sprintf("%s.desktop", strings.ToLower(strings.ReplaceAll(name, " ", "-"))))); err == nil {
+			isAutostart = "[*]"
+		}
+		items = append(items, fmt.Sprintf("%s %-30s | %s", isAutostart, name, execPath))
 	}
 
-	cmd := exec.Command("fzf", "--header=Select application to delete (ESC to exit)", "--height=40%")
+	cmd := exec.Command("fzf", "--header=Select application (Enter: toggle autostart, Del: delete, ESC: exit)", "--height=40%", "--bind=del:execute-silent(echo {+} > /tmp/to_delete)")
 	cmd.Stderr = os.Stderr
 	
 	stdin, err := cmd.StdinPipe()
@@ -470,14 +483,40 @@ func listingWithFzf(m *manager.Manager, entries []*desktop.DesktopFile) error {
 		return nil
 	}
 
-	name := strings.TrimSpace(strings.Split(selected, "|")[0])
-	fmt.Printf("Deleting application '%s'... ", name)
-	
-	if err := m.Delete(name); err != nil {
-		fmt.Printf("error: %v\n", err)
-		return err
+	if _, err := os.Stat("/tmp/to_delete"); err == nil {
+		os.Remove("/tmp/to_delete")
+		name := strings.TrimSpace(strings.Split(selected[4:], "|")[0])
+		fmt.Printf("Deleting application '%s'... ", name)
+		if err := m.Delete(name); err != nil {
+			fmt.Printf("error: %v\n", err)
+			return err
+		}
+		fmt.Println("success")
+		return nil
 	}
-	fmt.Println("success")
+
+	name := strings.TrimSpace(strings.Split(selected[4:], "|")[0])
+	autostartPath := filepath.Join(m.Config().AutostartDir, fmt.Sprintf("%s.desktop", strings.ToLower(strings.ReplaceAll(name, " ", "-"))))
+	
+	for _, entry := range entries {
+		entryName, _ := entry.Category("Desktop Entry").Get("Name")
+		if entryName == name {
+			if _, err := os.Stat(autostartPath); err == nil {
+				if err := os.Remove(autostartPath); err != nil {
+					fmt.Printf("Error removing from autostart: %v\n", err)
+					return err
+				}
+				fmt.Printf("Removed '%s' from autostart\n", name)
+			} else {
+				if err := entry.CreateAutostart(m.Config().AutostartDir); err != nil {
+					fmt.Printf("Error adding to autostart: %v\n", err)
+					return err
+				}
+				fmt.Printf("Added '%s' to autostart\n", name)
+			}
+			break
+		}
+	}
 	return nil
 }
 
@@ -495,18 +534,22 @@ func listing() error {
 		return listingWithFzf(m, entries)
 	}
 
-	fmt.Printf("\n%-4s | %-30s | %-50s\n", "#", "Name", "Executable Path")
-	fmt.Println(strings.Repeat("-", 87))
+	fmt.Printf("\n%-4s | %-4s | %-30s | %-50s\n", "#", "Auto", "Name", "Executable Path")
+	fmt.Println(strings.Repeat("-", 95))
 
 	for i, entry := range entries {
 		name, _ := entry.Category("Desktop Entry").Get("Name")
 		exec, _ := entry.Category("Desktop Entry").Get("Exec")
 		execPath := strings.Split(exec, " ")[0]
-		fmt.Printf("%-4d | %-30s | %-50s\n", i+1, name, execPath)
+		isAutostart := "[ ]"
+		if _, err := os.Stat(filepath.Join(m.Config().AutostartDir, fmt.Sprintf("%s.desktop", strings.ToLower(strings.ReplaceAll(name, " ", "-"))))); err == nil {
+			isAutostart = "[*]"
+		}
+		fmt.Printf("%-4d | %-4s | %-30s | %-50s\n", i+1, isAutostart, name, execPath)
 	}
-	fmt.Println(strings.Repeat("-", 87))
+	fmt.Println(strings.Repeat("-", 95))
 
-	fmt.Print("\nEnter application number to delete (or 'q' to exit): ")
+	fmt.Print("\nEnter application number to manage (or 'q' to exit): ")
 	var input string
 	fmt.Scanln(&input)
 
@@ -516,13 +559,37 @@ func listing() error {
 
 	if num, err := strconv.Atoi(input); err == nil && num > 0 && num <= len(entries) {
 		name, _ := entries[num-1].Category("Desktop Entry").Get("Name")
-		fmt.Printf("Deleting application '%s'... ", name)
+		autostartPath := filepath.Join(m.Config().AutostartDir, fmt.Sprintf("%s.desktop", strings.ToLower(strings.ReplaceAll(name, " ", "-"))))
 		
-		if err := m.Delete(name); err != nil {
-			fmt.Printf("error: %v\n", err)
-			return err
+		fmt.Print("Choose action ([d]elete, [t]oggle autostart): ")
+		var action string
+		fmt.Scanln(&action)
+
+		switch action {
+		case "d":
+			fmt.Printf("Deleting application '%s'... ", name)
+			if err := m.Delete(name); err != nil {
+				fmt.Printf("error: %v\n", err)
+				return err
+			}
+			fmt.Println("success")
+		case "t":
+			if _, err := os.Stat(autostartPath); err == nil {
+				if err := os.Remove(autostartPath); err != nil {
+					fmt.Printf("Error removing from autostart: %v\n", err)
+					return err
+				}
+				fmt.Printf("Removed '%s' from autostart\n", name)
+			} else {
+				if err := entries[num-1].CreateAutostart(m.Config().AutostartDir); err != nil {
+					fmt.Printf("Error adding to autostart: %v\n", err)
+					return err
+				}
+				fmt.Printf("Added '%s' to autostart\n", name)
+			}
+		default:
+			fmt.Println("Invalid action")
 		}
-		fmt.Println("success")
 	} else {
 		fmt.Println("Invalid input")
 	}
@@ -559,10 +626,30 @@ func chooseScript() error {
 		fmt.Println("1.0")
 		return nil
 	case "-i", "--install":
-		if len(os.Args) == 3 {
-			return runInstallScript(os.Args[2])
+		if len(os.Args) < 3 {
+			fmt.Println("Error: Application path required for install operation")
+			help()
+			return fmt.Errorf("missing application path")
 		}
-		fmt.Println("Error: Application path required for install operation")
+		autostart := false
+		if len(os.Args) > 3 && (os.Args[3] == "-a" || os.Args[3] == "--autostart") {
+			autostart = true
+		}
+		path, _ := filepath.Abs(os.Args[2])
+		_, err := os.Stat(path)
+		if err != nil {
+			return fmt.Errorf("install %s: %w", os.Args[2], err)
+		}
+		config := setConfig(path)
+		err = os.RemoveAll(config.ExtractDir)
+		if err != nil {
+			return fmt.Errorf("removing extract directory: %w", err)
+		}
+		install(config, autostart)
+		err = os.RemoveAll(config.ExtractDir)
+		if err != nil {
+			return fmt.Errorf("removing extract directory: %w", err)
+		}
 		return nil
 	default:
 		help()

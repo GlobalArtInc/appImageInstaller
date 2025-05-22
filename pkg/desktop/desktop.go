@@ -6,6 +6,7 @@ import (
     "os"
     "regexp"
     "strings"
+    "path/filepath"
 )
 
 type DesktopFile struct {
@@ -126,5 +127,24 @@ func (d *DesktopFile) parseFile(scanner *bufio.Scanner) error {
     if err := scanner.Err(); err != nil {
         return fmt.Errorf("error reading file: %w", err)
     }
+    return nil
+}
+
+func (d *DesktopFile) CreateAutostart(autostartDir string) error {
+    if err := os.MkdirAll(autostartDir, 0755); err != nil {
+        return fmt.Errorf("error creating autostart directory: %w", err)
+    }
+
+    name, err := d.Category("Desktop Entry").Get("Name")
+    if err != nil {
+        return fmt.Errorf("error getting application name: %w", err)
+    }
+
+    autostartPath := filepath.Join(autostartDir, fmt.Sprintf("%s.desktop", strings.ToLower(strings.ReplaceAll(name, " ", "-"))))
+    
+    if err := d.ToFile(autostartPath); err != nil {
+        return fmt.Errorf("error creating autostart entry: %w", err)
+    }
+
     return nil
 } 

@@ -2,76 +2,76 @@ project_name: appinstaller
 
 before:
   hooks:
-    - go mod tidy
+  - go mod tidy
 
 builds:
-  - env:
-      - CGO_ENABLED=0
-    goos:
-      - linux
-    goarch:
-      - amd64
-      - arm64
-    binary: appinstaller
+- env:
+  - CGO_ENABLED=0
+  goos:
+  - linux
+  goarch:
+  - amd64
+  - arm64
+  binary: appinstaller
 
 archives:
-  - format: tar.gz
-    name_template: >-
-      {{ .ProjectName }}_{{ .Os }}_{{ .Arch }}
-    files:
-      - README.md
-      - LICENSE*
-      - completions/**/*
+- format: tar.gz
+  name_template: >-
+    {{ .ProjectName }}_{{ .Os }}_{{ .Arch }}
+  files:
+  - README.md
+  - LICENSE*
+  - completions/**/*
 
 release:
   replace_existing_draft: true
   mode: replace
 
 nfpms:
-  - package_name: appinstaller
-    file_name_template: >-
-      {{ .ProjectName }}_{{ .Os }}_{{ .Arch }}
-    homepage: https://github.com/GlobalArtInc/appImageInstaller
-    maintainer: GlobalArtInc
-    description: |-
-      AppImage installer for Linux
-      Helps manage AppImage applications on Linux systems
-    license: MIT
-    formats:
-      - deb
-      - rpm
-    dependencies:
-      - git
-    recommends:
-      - golang
-    contents:
-      - src: ./README.md
-        dst: /usr/share/doc/appinstaller/README.md
-      - src: ./LICENSE
-        dst: /usr/share/doc/appinstaller/LICENSE
-      - src: ./completions/bash/appinstaller-argcomplete
-        dst: /etc/bash_completion.d/appinstaller-arg-complete
-        file_info:
-          mode: 0644
+- package_name: appinstaller
+  file_name_template: >-
+    {{ .ProjectName }}_{{ .Os }}_{{ .Arch }}
+  homepage: https://github.com/GlobalArtInc/appImageInstaller
+  maintainer: GlobalArtInc
+  description: |-
+    AppImage installer for Linux
+    Helps manage AppImage applications on Linux systems
+  license: MIT
+  formats:
+  - deb
+  - rpm
+  dependencies:
+  - git
+  recommends:
+  - golang
+  contents:
+  - src: ./README.md
+    dst: /usr/share/doc/appinstaller/README.md
+  - src: ./LICENSE
+    dst: /usr/share/doc/appinstaller/LICENSE
+  - src: ./completions/bash/appinstaller-argcomplete
+    dst: /etc/bash_completion.d/appinstaller-arg-complete
+    file_info:
+      mode: 644
 
-snapcrafts:
-  - name_template: "{{ .ProjectName }}_{{ .Arch }}"
-    summary: AppImage installer for Linux
-    description: |
-      AppImage installer for Linux
-      Helps manage AppImage applications on Linux systems
-    grade: stable
-    confinement: strict
-    publish: true
-    license: MIT
-    base: core20
-    apps:
-      appinstaller:
-        command: appinstaller
-        plugs:
-          - home
-          - network
-          - removable-media
+# snapcrafts:
+#   - name_template: "{{ .ProjectName }}_{{ .Arch }}"
+#     summary: AppImage installer for Linux
+#     description: |
+#       AppImage installer for Linux
+#       Helps manage AppImage applications on Linux systems
+#     grade: stable
+#     confinement: strict
+#     publish: true
+#     license: MIT
+#     base: core20
+#     apps:
+#       appinstaller:
+#         command: appinstaller
+#         plugs:
+#           - home
+#           - network
+#           - removable-media
 
 checksum:
   name_template: "checksums.txt"
@@ -83,8 +83,8 @@ changelog:
   sort: asc
   filters:
     exclude:
-      - "^docs:"
-      - "^test:"
-      - "^ci:"
-      - Merge pull request
-      - Merge branch
+    - "^docs:"
+    - "^test:"
+    - "^ci:"
+    - Merge pull request
+    - Merge branch

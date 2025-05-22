@@ -24,10 +24,10 @@ jobs:
         with:
           go-version: "1.22"
 
-      - name: Install Snapcraft
-        run: |
-          sudo snap install snapcraft --classic
-          echo "/snap/bin" >> $GITHUB_PATH
+      # - name: Install Snapcraft
+      #   run: |
+      #     sudo snap install snapcraft --classic
+      #     echo "/snap/bin" >> $GITHUB_PATH
 
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v5
@@ -37,4 +37,4 @@ jobs:
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
+          # SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
